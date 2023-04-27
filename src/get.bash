@@ -24,13 +24,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-_usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] [-t] pass-name"
+_usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] [-t] [-f] [-F] pass-name"
 _help="$_usage
     -p              Print value (default)
     -c              Send value to clipboard
     -n              Send as notification
     -q              Open as qr code
     -t              Type value
+    -f              Print field name with value
+    -F              Only print field name
     -h              Print this help message
 "
 
@@ -62,18 +64,20 @@ get(){
     if [ "$1" = "pass" ]; then
         printf "%s" "$content" | head -n 1
     else
-        printf "%s" "$( printf "%s" "$content" | grep -i "^${field}[^:]*:..*$" | sed "s/^${field}[^:]*:[[:space:]]*//" )"
+        printf "%s" "$( printf "%s" "$content" | grep -i "^${field}[^:]*:..*$" )"
     fi
 
 }
 
-while getopts 'hpcnqt' OPTION; do
+while getopts 'hpcnqtfF' OPTION; do
     case "$OPTION" in
     p) print=1 ;;
     c) clip=1 ;;
     n) notify=1 ;;
     q) qr=1 ;;
     t) type=1 ;;
+    f) printfield=1 ;;
+    F) novalue=1 ;;
     h) printf "%s" "$_help" ; exit;;
     esac
     shift "$(($OPTIND -1))"
@@ -84,8 +88,14 @@ FILE="$2"
 value="$( get "$FIELD" "$FILE" )"
 shift 2
 
+if [ "$novalue" == 1 ]; then
+    value="$( printf "%s" "$value" | sed "s/:.*$//" )"
+
 # remove field unless for the special case of a otpauth
-if ( printf "%s" "$value" | grep -cv "^otpauth:.*$" >/dev/null ); then
+elif ( printf "%s" "$value" | grep -cv "^otpauth:.*$" >/dev/null ) &&
+    # print fieldname with value
+    [ "$printfield" != 1 ]; then
+
     value="$( printf "%s" "$value" | sed "s/^${FIELD}[^:]*:[[:space:]]*//" )"
 fi
 
