@@ -84,6 +84,11 @@ FILE="$2"
 value="$( get "$FIELD" "$FILE" )"
 shift 2
 
+# remove field unless for the special case of a otpauth
+if ( printf "%s" "$value" | grep -cv "^otpauth:.*$" >/dev/null ); then
+    value="$( printf "%s" "$value" | sed "s/^${FIELD}[^:]*:[[:space:]]*//" )"
+fi
+
 # default to print
 [ -z "${print}${clip}${notify}${qr}${type}" ] && print=1
 
