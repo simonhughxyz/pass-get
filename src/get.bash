@@ -55,6 +55,36 @@ type(){
     fi
 }
 
+format(){
+    value="$1"
+    otpstring="$( printf "%s" "$value" | grep "^otpauth:.*" )"
+
+    if [ "$interpret" == 1 ] && [ -n "$otpstring" ]; then
+        otp="$( pass otp "$FILE" )"
+        value="$( printf "%s" "$value" | sed "s|${otpstring}|otpauth: ${otp}|" )"
+    fi
+
+    # only print field name
+    if [ "$novalue" == 1 ]; then
+        value="$( printf "%s" "$value" | sed "s/:.*$//" )"
+
+    # print fieldname with value
+    elif [ "$printfield" == 1 ]; then
+        value="$( printf "%s" "$value" )"
+
+    # print only value
+    else
+        value="$( printf "%s" "$value" | sed "s/^[^:]*:[[:space:]]*//")"
+
+        if [ "$interpret" != 1 ] && [ -n "$otpstring" ]; then
+            otpheadless="$( printf "%s" "$otpstring" | sed 's/otpauth://' )"
+            value="$( printf "%s" "$value" | sed "s|${otpheadless}|otpauth:&|" )"
+        fi
+    fi
+
+        printf "%s" "$value"
+}
+
 # get value from pass file
 get(){
     field="$1"
@@ -90,20 +120,7 @@ FILE="$2"
 value="$( get "$FIELD" "$FILE" )"
 shift 2
 
-# remove field unless for the special case of a otpauth
-if ( printf "%s" "$value" | grep -cv "^otpauth:.*$" >/dev/null ); then
-    # only print field name
-    if [ "$novalue" == 1 ]; then
-        value="$( printf "%s" "$value" | sed "s/:.*$//" )"
-    # print fieldname with value
-    elif [ "$printfield" != 1 ]; then
-        value="$( printf "%s" "$value" | sed "s/^[^:]*:[[:space:]]*//" )"
-    fi
-
-# if interpret flag is set, get otp from otpauth
-elif [ "$interpret" = 1 ]; then
-        value="$( pass otp "$FILE" )"
-fi
+value="$( format "$value" )"
 
 # default to print
 [ -z "${print}${clip}${notify}${qr}${type}" ] && print=1
