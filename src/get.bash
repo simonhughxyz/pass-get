@@ -45,6 +45,13 @@ get(){
 
 }
 
+while getopts 'h' OPTION; do
+    case "$OPTION" in
+    h) printf "%s" "$_help" ; exit;;
+    esac
+    shift "$(($OPTIND -1))"
+done
+
 FIELD="$1"
 FILE="$2"
 
