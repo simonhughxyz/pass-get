@@ -27,8 +27,18 @@
 _usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] pass-name"
 _help="$_usage
     -p              Print value (default)
+    -c              Send value to clipboard
     -h              Print this help message
 "
+
+# send to clipboard using wl-copy or xclip
+clip(){
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        wl-copy
+    else
+        xclip
+    fi
+}
 
 # get value from pass file
 get(){
@@ -45,8 +55,10 @@ get(){
 
 }
 
-while getopts 'h' OPTION; do
+while getopts 'hpc' OPTION; do
     case "$OPTION" in
+    p) print=1 ;;
+    c) clip=1 ;;
     h) printf "%s" "$_help" ; exit;;
     esac
     shift "$(($OPTIND -1))"
@@ -54,5 +66,12 @@ done
 
 FIELD="$1"
 FILE="$2"
+value="$( get "$FIELD" "$FILE" )"
+shift 2
 
-printf "%s\n" "$( get "$FIELD" "$FILE" )"
+if [ -n "$value" ]; then
+    [ "$print" = 1 ] && printf "%s\n" "$value"
+    [ "$clip" = 1 ] && printf "%s\n" "$value" | clip
+else
+    exit 1
+fi
