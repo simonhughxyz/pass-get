@@ -29,6 +29,7 @@ _help="$_usage
     -p              Print value (default)
     -c              Send value to clipboard
     -n              Send as notification
+    -q              Open as qr code
     -h              Print this help message
 "
 
@@ -56,11 +57,12 @@ get(){
 
 }
 
-while getopts 'hpcn' OPTION; do
+while getopts 'hpcnq' OPTION; do
     case "$OPTION" in
     p) print=1 ;;
     c) clip=1 ;;
     n) notify=1 ;;
+    q) qr=1 ;;
     h) printf "%s" "$_help" ; exit;;
     esac
     shift "$(($OPTIND -1))"
@@ -78,6 +80,7 @@ if [ -n "$value" ]; then
     [ "$print" = 1 ] && printf "%s\n" "$value"
     [ "$clip" = 1 ] && printf "%s\n" "$value" | clip
     [ "$notify" = 1 ] && notify-send "PASS: $FILE" "$value"
+    [ "$qr" = 1 ] && setsid -f sh -c "qrencode '$value' -s 8 -o - | imv - &"
 else
     exit 1
 fi
