@@ -24,12 +24,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-_usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] pass-name"
+_usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] [-t] pass-name"
 _help="$_usage
     -p              Print value (default)
     -c              Send value to clipboard
     -n              Send as notification
     -q              Open as qr code
+    -t              Type value
     -h              Print this help message
 "
 
@@ -39,6 +40,15 @@ clip(){
         wl-copy
     else
         xclip
+    fi
+}
+
+# type out using wtype or xdotool
+type(){
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        setsid sh -c "wtype -s 200 -d 20 '$1' &"
+    elif [ -n "$DISPLAY" ]; then
+        setsid sh -c "xdotool sleep 0.2 type --clearmodifiers '$1' &"
     fi
 }
 
@@ -57,12 +67,13 @@ get(){
 
 }
 
-while getopts 'hpcnq' OPTION; do
+while getopts 'hpcnqt' OPTION; do
     case "$OPTION" in
     p) print=1 ;;
     c) clip=1 ;;
     n) notify=1 ;;
     q) qr=1 ;;
+    t) type=1 ;;
     h) printf "%s" "$_help" ; exit;;
     esac
     shift "$(($OPTIND -1))"
@@ -74,13 +85,14 @@ value="$( get "$FIELD" "$FILE" )"
 shift 2
 
 # default to print
-[ -z "${print}${clip}${notify}${qr}" ] && print=1
+[ -z "${print}${clip}${notify}${qr}${type}" ] && print=1
 
 if [ -n "$value" ]; then
     [ "$print" = 1 ] && printf "%s\n" "$value"
     [ "$clip" = 1 ] && printf "%s\n" "$value" | clip
     [ "$notify" = 1 ] && notify-send "PASS: $FILE" "$value"
     [ "$qr" = 1 ] && setsid -f sh -c "qrencode '$value' -s 8 -o - | imv - &"
+    [ "$type" = 1 ] && type "$value"
 else
     exit 1
 fi
