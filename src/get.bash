@@ -69,6 +69,9 @@ FILE="$2"
 value="$( get "$FIELD" "$FILE" )"
 shift 2
 
+# default to print
+[ -z "${print}${clip}" ] && print=1
+
 if [ -n "$value" ]; then
     [ "$print" = 1 ] && printf "%s\n" "$value"
     [ "$clip" = 1 ] && printf "%s\n" "$value" | clip
