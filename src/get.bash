@@ -24,7 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-_usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] [-t] [-i] [-f] [-F] pass-name"
+_usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] [-t] [-i] [-f] [-F] pass-name [character list]"
 _help="$_usage
     -p              Print value (default)
     -c              Send value to clipboard
@@ -53,6 +53,22 @@ type(){
     elif [ -n "$DISPLAY" ]; then
         setsid sh -c "xdotool sleep 0.2 type --clearmodifiers '$1' &"
     fi
+}
+
+# get the nth characters
+nth(){
+    value="$1"
+    shift
+    numbers="$@"
+
+    if [ "$printfield" == 1 ]; then
+        field="$( printf "%s" "$value" | cut -d':' -f1 | sed 's/.*/&:/' )"
+        value="$( printf "%s" "$value" | sed 's/^[^:][^:]*:[[:space:]]*//' | cut -c "$numbers" )"
+        paste -d' ' <(printf "%s\n" "$field") <(printf "%s\n" "$value")
+    else
+        printf "%s" "$value" | cut -c "$numbers"
+    fi
+
 }
 
 format(){
@@ -121,6 +137,9 @@ value="$( get "$FIELD" "$FILE" )"
 shift 2
 
 value="$( format "$value" )"
+
+# get nth characters
+[ $# -gt 0 ] && value="$( nth "$value" $@ )"
 
 # default to print
 [ -z "${print}${clip}${notify}${qr}${type}" ] && print=1
