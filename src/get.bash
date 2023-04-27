@@ -108,6 +108,7 @@ if [ -n "$value" ]; then
     [ "$notify" = 1 ] && notify-send "PASS: $FILE" "$value"
     [ "$qr" = 1 ] && setsid -f sh -c "qrencode '$value' -s 8 -o - | imv - &"
     [ "$type" = 1 ] && type "$value"
+    exit 0
 else
     exit 1
 fi
