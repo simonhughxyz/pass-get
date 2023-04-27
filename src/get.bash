@@ -28,6 +28,7 @@ _usage="Usage: $(basename $0) get [-p] [-c] [-n] [-q] pass-name"
 _help="$_usage
     -p              Print value (default)
     -c              Send value to clipboard
+    -n              Send as notification
     -h              Print this help message
 "
 
@@ -55,10 +56,11 @@ get(){
 
 }
 
-while getopts 'hpc' OPTION; do
+while getopts 'hpcn' OPTION; do
     case "$OPTION" in
     p) print=1 ;;
     c) clip=1 ;;
+    n) notify=1 ;;
     h) printf "%s" "$_help" ; exit;;
     esac
     shift "$(($OPTIND -1))"
@@ -75,6 +77,7 @@ shift 2
 if [ -n "$value" ]; then
     [ "$print" = 1 ] && printf "%s\n" "$value"
     [ "$clip" = 1 ] && printf "%s\n" "$value" | clip
+    [ "$notify" = 1 ] && notify-send "PASS: $FILE" "$value"
 else
     exit 1
 fi
